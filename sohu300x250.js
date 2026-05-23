@@ -87,6 +87,79 @@
             o_report( node, SetType, 'rc_300X250', lc )
 
         }
+        // rb模块：复用rc的Adsense广告代码，弹窗居中并独立统计pv和点击
+        function o_rbAd ( node, ad, lc )
+        {
+            console.log("rb-begin:",Date.now());
+            console.log("node:", node);
+            if ( !node ) return
+            if ( ad == false )
+            {
+                ad = 'adsense'
+            }
+
+            let SetType = o_browserRedirect()
+            node.setAttribute( "SetType", SetType )
+            let pros = o_getProperties()
+
+            let rbMask = document.createElement( "div" )
+            rbMask.setAttribute( "id", "onemob-rb-mask" )
+            rbMask.setAttribute( "style", "position:fixed;top:0;left:0;width:100%;height:100%;z-index:2147483647;background:rgba(0,0,0,0.78);display:flex;align-items:center;justify-content:center;overflow:hidden;" )
+            document.body.appendChild( rbMask )
+
+            let rbWrap = document.createElement( "div" )
+            rbWrap.setAttribute( "id", "onemob-rb-wrap" )
+            rbWrap.setAttribute( "style", "position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#fff;overflow:hidden;" )
+            rbMask.appendChild( rbWrap )
+
+            let script1 = document.createElement( "script" )
+            script1.async = true
+            script1.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2894714012965030'
+            script1.setAttribute( "crossorigin", 'anonymous' )
+            rbWrap.appendChild( script1 )
+
+            let div = document.createElement( "ins" )
+            div.setAttribute( "id", "onemob-ad" )
+            div.setAttribute( "class", 'adsbygoogle' )
+            div.setAttribute( "style", 'display:block;width:100%;height:100%;min-width:300px;min-height:250px;' )
+            div.setAttribute( "data-ad-client", 'ca-pub-2894714012965030' )
+            div.setAttribute( "data-ad-slot", '4445597105' )
+            div.setAttribute( "data-ad-format", 'auto' )
+            div.setAttribute( "data-full-width-responsive", 'true' )
+            rbWrap.appendChild( div )
+
+            let script2 = document.createElement( "script" )
+            script2.text = "(adsbygoogle = window.adsbygoogle || []).push({});"
+            rbWrap.appendChild( script2 )
+
+            let img = document.createElement( "img" )
+            img.src = "https://pweapons.com/p.gif?s=rb&a=" + ad + "m&t=p&_=" + Date.now() + pros
+            img.style.display = 'none'
+            rbWrap.appendChild( img )
+
+            let isOverAd = false
+            let hasClickReport = false
+            let reportClick = function ()
+            {
+                if ( hasClickReport ) return
+                hasClickReport = true
+                let img = document.createElement( "img" )
+                img.src = "https://pweapons.com/p.gif?s=rb&a=" + ad + "m&t=c&_=" + Date.now() + pros
+                img.style.display = 'none'
+                rbWrap.appendChild( img )
+            }
+
+            rbWrap.onmouseover = function () { isOverAd = true }
+            rbWrap.onmouseout = function () { isOverAd = false }
+            rbWrap.ontouchstart = function () { isOverAd = true }
+            window.addEventListener( 'blur', function ()
+            {
+                let activeElement = document.activeElement
+                if ( isOverAd || ( activeElement && activeElement.tagName == 'IFRAME' && rbWrap.contains( activeElement ) ) ) reportClick()
+            } )
+
+            o_report( node, SetType, 'rb_300X250', lc )
+        }
         //原生Taboola
         function o_taboolaAd ( node, co, flag, adid )
         {
@@ -459,6 +532,10 @@
             {
                 o_rcAd( d, 'rc_sohu', lc )
             }
+            if ( ad == 'rb' || ad == 'rb-sohu' )
+            {
+                o_rbAd( d, 'rb_sohu', lc )
+            }
             if ( ad == 'ume-sohu-sc-apb' )
             {
                 o_taboolaAd( d, 'sohu', lc, "o-taboola-ad" )
@@ -646,6 +723,9 @@
         } else if ( t == 'rc' || tt == 'rc' )
         {
             o_rcAd( d, c, '' )
+        } else if ( t == 'rb' || tt == 'rb' )
+        {
+            o_rbAd( d, c, '' )
         } else if ( t != false )
         {
             o_taboolaAd( d, 'sohu', t, "onemob" )
