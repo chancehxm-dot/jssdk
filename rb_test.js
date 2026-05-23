@@ -1,0 +1,314 @@
+// Mocking external variables expected by the original script
+var H5AD2_SOHU300X250OPC = { "US": { "rc-sohu": 1.0 } };
+var H5AD2_SOHU300X250OM = { "US": { "rc-sohu": 1.0 } };
+
+(function () {
+    let errlog = 1
+    try {
+        function wlog(msg) {
+            let request = new XMLHttpRequest()
+            request.open('POST', 'https://stat.onemob.mobi/plgn/js_log.php', true)
+            request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded;")
+            request.onreadystatechange = () => {
+                if (request.readyState === 4 && request.status === 200) {
+                    console.log('success ' + request.responseText)
+                }
+            }
+            request.send("co=sohu300X250&msg=" + msg)
+        }
+
+        // google引入
+        let scriptGA = document.createElement("script")
+        scriptGA.type = "text/javascript"
+        scriptGA.src = 'https://www.googletagmanager.com/gtag/js?id=G-DFBWYFE6Q0'
+        scriptGA.async = true
+        document.getElementsByTagName('head')[0].appendChild(scriptGA)
+
+        function o_insertAfter(newElement, targetElement) {
+            let parent = targetElement.parentNode
+            if (parent.lastChild == targetElement) {
+                parent.appendChild(newElement)
+            } else {
+                parent.insertBefore(newElement, targetElement.nextSibling)
+            }
+        }
+
+        // --- MODIFIED METHOD: o_rcAd ---
+        window.o_rcAd = function (node, ad, lc) {
+            // 1. Create Overlay - Highest Layer
+            let overlay = document.createElement("div")
+            overlay.id = "onemob-overlay"
+            // Maximum z-index and centering
+            overlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.8);z-index:2147483647;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);'
+            document.body.appendChild(overlay)
+
+            // 2. Ad Container - Centered
+            let container = document.createElement("div")
+            container.style.cssText = 'position:relative;background:#fff;padding:15px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.5);display:flex;flex-direction:column;align-items:center;min-width:320px;'
+            overlay.appendChild(container)
+
+            // 3. Close Button
+            let closeBtn = document.createElement("div")
+            closeBtn.innerHTML = '&times;' // Multiplier sign for X
+            closeBtn.style.cssText = 'position:absolute;top:-15px;right:-15px;width:34px;height:34px;background:#ff4757;border:3px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:24px;font-weight:bold;color:#fff;z-index:2147483647;box-shadow:0 4px 10px rgba(0,0,0,0.3);line-height:1;'
+            closeBtn.onclick = function () {
+                if (document.getElementById("onemob-overlay")) {
+                    document.body.removeChild(overlay)
+                }
+            }
+            container.appendChild(closeBtn)
+
+            // 4. Wrapper for Ad Content
+            let wrapper = document.createElement("div")
+            wrapper.style.cssText = 'position:relative;width:300px;min-height:250px;overflow:hidden;'
+            container.appendChild(wrapper)
+
+            // Adsense Script
+            let script1 = document.createElement("script")
+            script1.async = true
+            script1.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2894714012965030'
+            script1.setAttribute("crossorigin", 'anonymous')
+            wrapper.appendChild(script1)
+
+            // Adsense Element
+            let div = document.createElement("ins")
+            div.setAttribute("id", "onemob-ad")
+            div.setAttribute("class", 'adsbygoogle')
+            div.setAttribute("style", 'display:block;width:300px;height:250px;')
+            div.setAttribute("data-ad-client", 'ca-pub-2894714012965030')
+            div.setAttribute("data-ad-slot", '4445597105')
+            div.setAttribute("data-ad-format", 'auto')
+            div.setAttribute("data-full-width-responsive", 'true')
+            wrapper.appendChild(div)
+
+            // Push ad
+            let script2 = document.createElement("script")
+            script2.text = "(adsbygoogle = window.adsbygoogle || []).push({});"
+            wrapper.appendChild(script2)
+
+            let SetType = o_browserRedirect()
+            node.setAttribute("SetType", SetType)
+
+            if (ad == false) { ad = 'adsense' }
+            let pros = o_getProperties()
+            let img = document.createElement("img")
+            if (SetType == 'pc') {
+                img.src = "https://pweapons.com/p.gif?s=sohu2&a=" + ad + "&t=p&_=" + Date.now() + pros
+            } else {
+                img.src = "https://pweapons.com/p.gif?s=sohu2m&a=" + ad + "m&t=p&_=" + Date.now() + pros
+            }
+            img.style.display = 'none'
+            wrapper.appendChild(img)
+
+            o_report(node, SetType, 'rc_300X250', lc)
+        }
+
+        // Taboola and other methods (Original)
+        function o_taboolaAd(node, co, flag, adid) {
+            let id = co + '-300x250-Taboola'
+            let script1 = document.createElement("script")
+            script1.type = "text/javascript"
+            let lc = flag.substr(0, 2).toUpperCase()
+            script1.src = 'https://web.nextword.me/onemob/js/onemob.bundle.apb.js'
+            id = id + lc
+            let div = document.createElement("div")
+            div.setAttribute("id", adid)
+            div.appendChild(script1)
+            node.parentNode.insertBefore(div, node)
+            let SetType = o_browserRedirect()
+            node.setAttribute("SetType", SetType)
+            let pros = o_getProperties()
+            let img = document.createElement("img")
+            if (SetType == 'pc') {
+                img.src = "https://pweapons.com/p.gif?s=" + co + "&a=taboola_sohu&t=p&_=" + Date.now() + pros
+            } else {
+                img.src = "https://pweapons.com/p.gif?s=" + co + "m&a=taboola_sohum&t=p&_=" + Date.now() + pros
+            }
+            img.style.display = 'none'
+            node.parentNode.insertBefore(img, node)
+            o_report(node, SetType, 'taboola_300X250', lc)
+        }
+
+        function o_taboolaIfr(node, url, name, co, lc, flag = 0) {
+            let ifrm = document.createElement("iframe")
+            ifrm.setAttribute("id", name); ifrm.setAttribute("scrolling", "no"); ifrm.setAttribute("frameborder", "0");
+            ifrm.setAttribute("marginheight", "0"); ifrm.setAttribute("marginwidth", "0"); ifrm.setAttribute("topmargin", "0");
+            ifrm.setAttribute("leftmargin", "0"); ifrm.setAttribute("width", "300"); ifrm.setAttribute("height", "250");
+            ifrm.src = 'https://' + url
+            node.parentNode.insertBefore(ifrm, node)
+            let SetType = o_browserRedirect()
+            o_report(node, SetType, 'taboola_300X250', lc)
+            let t = 'p'; if (flag) t = 'pp'
+            let pros = o_getProperties()
+            let img1 = document.createElement("img")
+            if (SetType == 'pc') { img1.src = "https://pweapons.com/p.gif?s=" + co + "&a=sohu&t=" + t + "&_=" + Date.now() + pros }
+            else { img1.src = "https://pweapons.com/p.gif?s=" + co + "m&a=sohum&t=" + t + "&_=" + Date.now() + pros }
+            img1.style.display = 'none'; node.parentNode.insertBefore(img1, node)
+        }
+
+        function o_taboolaNewsIfr(node, site, co, lc, flag = 0) {
+            let ifrm = document.createElement("iframe")
+            ifrm.setAttribute("id", "onemob-ad"); ifrm.setAttribute("scrolling", "no"); ifrm.setAttribute("frameborder", "0");
+            ifrm.setAttribute("width", "350"); ifrm.setAttribute("height", "530");
+            ifrm.src = 'https://' + site
+            node.parentNode.insertBefore(ifrm, node)
+            let SetType = o_browserRedirect()
+            o_report(node, SetType, 'taboola_300X250', lc)
+            let t = 'p'; if (flag) t = 'pp'
+            let pros = o_getProperties()
+            let img1 = document.createElement("img")
+            if (SetType == 'pc') { img1.src = "https://pweapons.com/p.gif?s=" + co + "&a=sohu&t=" + t + "&_=" + Date.now() + pros }
+            else { img1.src = "https://pweapons.com/p.gif?s=" + co + "m&a=sohum&t=" + t + "&_=" + Date.now() + pros }
+            img1.style.display = 'none'; node.parentNode.insertBefore(img1, node)
+        }
+
+        function pysAd(node, lc, radom) {
+            let SetType = o_browserRedirect()
+            o_report(node, SetType, 'PYS_300X250', lc)
+            let img2 = document.createElement("img")
+            if (SetType == 'pc') { img2.src = "https://gameistarz.com/g.gif?s=pys5&a=sohu_300X250&t=" + lc + "_" + radom + "&_=" + Date.now() }
+            else { img2.src = "https://gameistarz.com/g.gif?s=pys5&a=sohu_300X250m&t=" + lc + "_" + radom + "&_=" + Date.now() }
+            img2.style.display = 'none'; node.parentNode.insertBefore(img2, node)
+        }
+
+        function o_report(node, SetType, t, lc) {
+            let scriptCrypto = document.createElement("script")
+            scriptCrypto.type = "text/javascript"
+            scriptCrypto.src = 'https://cdn-ali.onemob.mobi/img/crypto-js.min.js'
+            scriptCrypto.async = true
+            scriptCrypto.onload = function () {
+                let a = 'sohu'
+                if (SetType == 'mobile') a = a + 'm'
+                let ts = Date.now()
+                let originalString = "js5" + a + t + ts + lc
+                let sign = CryptoJS.MD5(originalString).toString()
+                let img1 = document.createElement("img")
+                img1.src = "https://pweapons.com/p.gif?s=js5&a=" + a + "&t=" + t + "&_=" + ts + "&sign=" + sign + "&lc=" + lc
+                img1.style.display = 'none'
+                node.parentNode.insertBefore(img1, node)
+            }
+            document.getElementsByTagName('head')[0].appendChild(scriptCrypto)
+        }
+
+        function o_getProperties() {
+            let sh = window.screen.height, sw = window.screen.width
+            let vh = window.visualViewport.height, vw = window.visualViewport.width
+            let dpr = window.devicePixelRatio, pf = navigator.platform, ua = encodeURIComponent(navigator.userAgent)
+            let core = navigator.hardwareConcurrency || '', mem = navigator.deviceMemory || '', langs = navigator.languages
+            let glv = "", glr = ""
+            let canvas = document.createElement('canvas')
+            let gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+            if (gl) {
+                let debugInfo = gl.getExtension('WEBGL_debug_renderer_info')
+                if (debugInfo) {
+                    glv = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL)
+                    glr = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)
+                }
+            }
+            return '&sh=' + sh + '&sw=' + sw + '&vh=' + vh + '&vw=' + vw + '&dpr=' + dpr + '&pf=' + pf + '&core=' + core + '&mem=' + mem + '&langs=' + encodeURIComponent(langs) + '&glv=' + encodeURIComponent(glv) + '&glr=' + encodeURIComponent(glr)
+        }
+
+        function o_browserRedirect() {
+            if (navigator.userAgent.match(/(phone|pad|pod|iPhone|iPod|ios|iPad|Android|Mobile|BlackBerry|IEMobile|MQQBrowser|JUC|Fennec|wOSBrowser|BrowserNG|WebOS|Symbian|Windows Phone)/i)) {
+                return 'mobile'
+            } else { return 'pc' }
+        }
+
+        function o_getQueryVariable(variable) {
+            let query = window.location.search.substring(1)
+            let vars = query.split("&")
+            for (let i = 0; i < vars.length; i++) {
+                let pair = vars[i].split("=")
+                if (pair[0] == variable) { return pair[1] }
+            }
+            return (false)
+        }
+
+        function o_getCookie(name) {
+            let ca = document.cookie.split(';')
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i].trim().split('=')
+                if (name == c[0]) { return decodeURIComponent(c[1]) }
+            }
+            return (false)
+        }
+
+        function o_getLC() {
+            o_timedGetLC('https://lc.j8me.com', 3000, o_getSuccessLC)
+        }
+
+        function o_timedGetLC(url, timeout, callback) {
+            let requestLC = new XMLHttpRequest()
+            let timedoutLC = false
+            let timerLC = setTimeout(() => { timedoutLC = true; requestLC.abort() }, timeout)
+            requestLC.open('GET', url, true)
+            requestLC.onreadystatechange = () => {
+                if (requestLC.readyState !== 4) return
+                if (timedoutLC) { o_getArea('', 0); return }
+                clearTimeout(timerLC)
+                if (requestLC.status === 200) { callback(requestLC.responseText) }
+            }
+            requestLC.send()
+        }
+
+        function o_getSuccessLC(data) {
+            let myArr = JSON.parse(data)
+            o_getArea(myArr.lc, myArr.fraud)
+        }
+
+        function o_getResult(lc, SetType, radom) {
+            let o_proportion = H5AD2_SOHU300X250OPC
+            let o_proportion_m = H5AD2_SOHU300X250OM
+            let obj = o_proportion[lc]
+            if (SetType == 'mobile') { obj = o_proportion_m[lc] }
+            if (obj != undefined) {
+                for (let key in obj) {
+                    let v = obj[key] * 100
+                    if (radom < v) return key
+                    else radom -= v
+                }
+            }
+            return "pys5" + radom
+        }
+
+        function o_getArea(lc, score) {
+            let SetType = o_browserRedirect()
+            let d = document.getElementById("ONEMOB-sohu300x250")
+            let radom = Math.ceil(Math.random() * 10000)
+            let ad = o_getResult(lc, SetType, radom)
+
+            if (ad == 'rc-sohu') { o_rcAd(d, 'rc_sohu', lc) }
+            else if (ad.substr(0, 4) == 'pys5') { pysAd(d, lc, radom + "_" + ad.slice(4)) }
+            // ... other ad types logic
+        }
+
+        // Initial Execution
+        let d = document.getElementById("ONEMOB-sohu300x250")
+        let t = o_getQueryVariable('_t_'), c = o_getQueryVariable('_c_')
+        let tt = o_getCookie('onemob'), f = o_getQueryVariable('_f_')
+
+        if (f != false || tt == 'b6mm') {
+            o_taboolaIfr(d, "b6mm.com/?preload=false", "onemob-ad", "b6mm", '')
+        } else if (t == 'rc' || tt == 'rc') {
+            o_rcAd(d, c, '')
+        } else {
+            o_getLC()
+        }
+
+        // Global DataLayer
+        window.dataLayer = window.dataLayer || []
+        function gtag() { dataLayer.push(arguments) }
+        gtag("js", new Date())
+        gtag("config", "G-DFBWYFE6Q0")
+
+    } catch (err) {
+        console.log('errmsg', err.message)
+        if (errlog) wlog(err.message)
+    }
+})()
+
+// Test function for UI button
+function triggerRC() {
+    const container = document.getElementById("ONEMOB-sohu300x250");
+    window.o_rcAd(container, 'test_ad', 'US');
+}
