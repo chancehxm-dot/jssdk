@@ -90,8 +90,6 @@
         // rb模块：复用rc的Adsense广告代码，弹窗居中并独立统计pv和点击
         function o_rbAd ( node, ad, lc )
         {
-            console.log("rb-begin:",Date.now());
-            console.log("node:", node);
             if ( !node ) return
             if ( ad == false )
             {
@@ -109,7 +107,7 @@
 
             let rbWrap = document.createElement( "div" )
             rbWrap.setAttribute( "id", "onemob-rb-wrap" )
-            rbWrap.setAttribute( "style", "position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#fff;overflow:hidden;" )
+            rbWrap.setAttribute( "style", "position:relative;width:100%;height:280px;display:flex;align-items:center;justify-content:center;background:#fff;overflow:hidden;" )
             rbMask.appendChild( rbWrap )
 
             let script1 = document.createElement( "script" )
@@ -121,27 +119,36 @@
             let div = document.createElement( "ins" )
             div.setAttribute( "id", "onemob-ad" )
             div.setAttribute( "class", 'adsbygoogle' )
-            div.setAttribute( "style", 'display:block;width:100%;height:100%;min-width:300px;min-height:250px;' )
+            div.setAttribute( "style", 'display:block;width:100%;height:280px;' )
             div.setAttribute( "data-ad-client", 'ca-pub-2894714012965030' )
             div.setAttribute( "data-ad-slot", '4445597105' )
             div.setAttribute( "data-ad-format", 'auto' )
             div.setAttribute( "data-full-width-responsive", 'true' )
+            div.setAttribute( "data-onemob-rb", '1' )
             rbWrap.appendChild( div )
 
-            let script2 = document.createElement( "script" )
-            script2.text = "(adsbygoogle = window.adsbygoogle || []).push({});"
-            rbWrap.appendChild( script2 )
-
-            let img = document.createElement( "img" )
-            img.src = "https://pweapons.com/p.gif?s=rb&a=" + ad + "m&t=p&_=" + Date.now() + pros
-            img.style.display = 'none'
-            rbWrap.appendChild( img )
-
             let isOverAd = false
+            let isAdFilled = false
+            let rbAdState = 'pending'
+            let hasPvReport = false
             let hasClickReport = false
+            let observer = null
+            let intervalId = null
+            let noStatusTimer = null
+            let pushTimer = null
+            let pushedAdsense = false
+            let reportPv = function ( t )
+            {
+                if ( hasPvReport ) return
+                hasPvReport = true
+                let img = document.createElement( "img" )
+                img.src = "https://pweapons.com/p.gif?s=rb&a=" + ad + "m&t=" + t + "&_=" + Date.now() + pros
+                img.style.display = 'none'
+                document.body.appendChild( img )
+            }
             let reportClick = function ()
             {
-                if ( hasClickReport ) return
+                if ( !isAdFilled || hasClickReport ) return
                 hasClickReport = true
                 let img = document.createElement( "img" )
                 img.src = "https://pweapons.com/p.gif?s=rb&a=" + ad + "m&t=c&_=" + Date.now() + pros
@@ -149,14 +156,109 @@
                 rbWrap.appendChild( img )
             }
 
+            let clearRbMonitor = function ()
+            {
+                if ( observer ) observer.disconnect()
+                if ( intervalId ) clearInterval( intervalId )
+                if ( noStatusTimer ) clearTimeout( noStatusTimer )
+                if ( pushTimer ) clearTimeout( pushTimer )
+            }
+            let reportFilled = function ()
+            {
+                if ( rbAdState != 'pending' ) return
+                rbAdState = 'filled'
+                isAdFilled = true
+                div.setAttribute( "id", "ad-filled-container-1" )
+                reportPv( 'p' )
+                clearRbMonitor()
+            }
+            let reportNoFill = function ()
+            {
+                if ( rbAdState != 'pending' ) return
+                rbAdState = 'nofill'
+                isAdFilled = false
+                reportPv( 'pn' )
+                if ( rbMask )
+                {
+                    rbMask.style.display = 'none'
+                }
+                clearRbMonitor()
+            }
+            let hasVisibleIframe = function ()
+            {
+                let iframes = div.getElementsByTagName( 'iframe' )
+                for ( let i = 0; i < iframes.length; i++ )
+                {
+                    let iframe = iframes[i]
+                    let width = iframe.offsetWidth || parseInt( iframe.getAttribute( 'width' ) || 0 )
+                    let height = iframe.offsetHeight || parseInt( iframe.getAttribute( 'height' ) || 0 )
+                    if ( width > 0 && height > 0 ) return true
+                }
+                return false
+            }
+            let checkRbAdState = function ()
+            {
+                if ( rbAdState != 'pending' ) return true
+                if ( div.getAttribute( "data-ad-client" ) != 'ca-pub-2894714012965030' ) return true
+                if ( div.getAttribute( "data-onemob-rb" ) != '1' ) return true
+                let status = div.getAttribute( 'data-ad-status' )
+                if ( status == 'filled' )
+                {
+                    reportFilled()
+                    return true
+                }
+                if ( status == 'unfilled' )
+                {
+                    reportNoFill()
+                    return true
+                }
+                if ( hasVisibleIframe() )
+                {
+                    setTimeout( function ()
+                    {
+                        if ( rbAdState == 'pending' && hasVisibleIframe() ) reportFilled()
+                    }, 2500 )
+                }
+                return false
+            }
+
             rbWrap.onmouseover = function () { isOverAd = true }
             rbWrap.onmouseout = function () { isOverAd = false }
             rbWrap.ontouchstart = function () { isOverAd = true }
+            div.onclick = reportClick
             window.addEventListener( 'blur', function ()
             {
                 let activeElement = document.activeElement
                 if ( isOverAd || ( activeElement && activeElement.tagName == 'IFRAME' && rbWrap.contains( activeElement ) ) ) reportClick()
             } )
+
+            if ( typeof MutationObserver != 'undefined' )
+            {
+                observer = new MutationObserver( function ()
+                {
+                    checkRbAdState()
+                } )
+                observer.observe( div, { attributes: true, childList: true, subtree: true } )
+            }
+            intervalId = setInterval( checkRbAdState, 1000 )
+            noStatusTimer = setTimeout( function ()
+            {
+                if ( rbAdState == 'pending' ) reportNoFill()
+            }, 45000 )
+            let pushRbAdsense = function ()
+            {
+                if ( pushedAdsense || rbAdState != 'pending' ) return
+                try
+                {
+                    window.adsbygoogle = window.adsbygoogle || []
+                    window.adsbygoogle.push( {} )
+                    pushedAdsense = true
+                } catch ( e )
+                {
+                    pushTimer = setTimeout( pushRbAdsense, 1500 )
+                }
+            }
+            pushRbAdsense()
 
             o_report( node, SetType, 'rb_300X250', lc )
         }
@@ -464,8 +566,8 @@
             return "pys5" + radom
         }
         //申明广告的数组（比例区间）
-        let o_proportion = H5AD2_SOHU300X250OPC
-        let o_proportion_m = H5AD2_SOHU300X250OM
+        let o_proportion = typeof H5AD2_SOHU300X250OPC == 'undefined' ? {} : H5AD2_SOHU300X250OPC
+        let o_proportion_m = typeof H5AD2_SOHU300X250OM == 'undefined' ? {} : H5AD2_SOHU300X250OM
         // let o_proportion = {
         //     "US": {
         //         'ume': 0,
