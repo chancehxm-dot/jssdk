@@ -131,7 +131,8 @@
             let isAdFilled = false
             let rbAdState = 'pending'
             let hasPvReport = false
-            let hasClickReport = false
+            let lastClickReportAt = 0
+            let isOverIframe = false
             let observer = null
             let intervalId = null
             let noStatusTimer = null
@@ -148,8 +149,10 @@
             }
             let reportClick = function ()
             {
-                if ( !isAdFilled || hasClickReport ) return
-                hasClickReport = true
+                if ( !isAdFilled ) return
+                let now = Date.now()
+                if ( now - lastClickReportAt < 300 ) return
+                lastClickReportAt = now
                 let img = document.createElement( "img" )
                 img.src = "https://pweapons.com/p.gif?s=rb&a=" + ad + "m&t=c&_=" + Date.now() + pros
                 img.style.display = 'none'
@@ -226,10 +229,24 @@
             rbWrap.onmouseout = function () { isOverAd = false }
             rbWrap.ontouchstart = function () { isOverAd = true }
             div.onclick = reportClick
+            document.addEventListener( 'mousemove', function ( e )
+            {
+                let el = document.elementFromPoint( e.clientX, e.clientY )
+                isOverIframe = !!( el && el.tagName == 'IFRAME' && rbWrap.contains( el ) )
+            } )
             window.addEventListener( 'blur', function ()
             {
                 let activeElement = document.activeElement
-                if ( isOverAd || ( activeElement && activeElement.tagName == 'IFRAME' && rbWrap.contains( activeElement ) ) ) reportClick()
+                if ( isOverAd || isOverIframe || ( activeElement && activeElement.tagName == 'IFRAME' && rbWrap.contains( activeElement ) ) )
+                {
+                    reportClick()
+                    setTimeout( function () { window.focus() }, 300 )
+                }
+            } )
+            document.addEventListener( 'visibilitychange', function ()
+            {
+                let activeElement = document.activeElement
+                if ( document.hidden && activeElement && activeElement.tagName == 'IFRAME' && rbWrap.contains( activeElement ) ) reportClick()
             } )
 
             if ( typeof MutationObserver != 'undefined' )
